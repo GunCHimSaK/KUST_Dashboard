@@ -510,7 +510,7 @@ extern SPI_HandleTypeDef hspi1;
 
 /* 1. CS 핀 제어 (샤프는 Active High: 1일 때 SET, 0일 때 RESET) */
 #define LV_DRV_DISP_SPI_CS(state) \
-    HAL_GPIO_WritePin(LCD_CS_GPIO_Port, LCD_CS_Pin, (state) ? GPIO_PIN_SET : GPIO_PIN_RESET)
+    HAL_GPIO_WritePin(SPI1_SCS_GPIO_Port, SPI1_SCS_Pin, (state) ? GPIO_PIN_SET : GPIO_PIN_RESET)
 
 /* 2. SPI 데이터 전송 (CPU 블로킹 방식) */
 #define LV_DRV_DISP_SPI_WR_ARRAY(adr, n) \

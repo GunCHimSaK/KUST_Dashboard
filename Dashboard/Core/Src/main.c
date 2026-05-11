@@ -18,7 +18,7 @@
 /* USER CODE END Header */
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
-
+#include "vehicle_data.h"
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
 
@@ -48,6 +48,8 @@ LPTIM_HandleTypeDef hlptim2;
 
 SPI_HandleTypeDef hspi1;
 
+TIM_HandleTypeDef htim2;
+
 /* USER CODE BEGIN PV */
 
 /* USER CODE END PV */
@@ -61,6 +63,7 @@ static void MX_ADC1_Init(void);
 static void MX_FDCAN1_Init(void);
 static void MX_LPTIM2_Init(void);
 static void MX_ICACHE_Init(void);
+static void MX_TIM2_Init(void);
 /* USER CODE BEGIN PFP */
 
 /* USER CODE END PFP */
@@ -107,7 +110,29 @@ int main(void)
   MX_FDCAN1_Init();
   MX_LPTIM2_Init();
   MX_ICACHE_Init();
+  MX_TIM2_Init();
   /* USER CODE BEGIN 2 */
+  HAL_FDCAN_ConfigGlobalFilter(&hfdcan1, FDCAN_REJECT, FDCAN_REJECT, FDCAN_FILTER_REMOTE, FDCAN_FILTER_REMOTE);
+
+  FDCAN_FilterTypeDef sFilterConfig;
+
+  sFilterConfig.IdType = FDCAN_STANDARD_ID;
+
+  sFilterConfig.FilterIndex = 0;		//filter 1
+  sFilterConfig.FilterType = FDCAN_FILTER_DUAL;
+  sFilterConfig.FilterConfig = FDCAN_FILTER_TO_RXFIFO0;
+  sFilterConfig.FilterID1 = 0x010;
+  sFilterConfig.FilterID2 = 0x100;
+  HAL_FDCAN_ConfigFilter(&hfdcan1, &sFilterConfig);
+
+
+  sFilterConfig.FilterIndex = 1;		//filter 2
+  sFilterConfig.FilterID1 = 0x200;
+  sFilterConfig.FilterID2 = 0x201;
+  HAL_FDCAN_ConfigFilter(&hfdcan1, &sFilterConfig);
+
+  HAL_FDCAN_Start(&hfdcan1);
+  HAL_FDCAN_ActivateNotification(&hfdcan1, FDCAN_IT_RX_FIFO0_NEW_MESSAGE, 0);
 
   /* USER CODE END 2 */
 
@@ -283,10 +308,10 @@ static void MX_FDCAN1_Init(void)
   hfdcan1.Init.AutoRetransmission = DISABLE;
   hfdcan1.Init.TransmitPause = DISABLE;
   hfdcan1.Init.ProtocolException = DISABLE;
-  hfdcan1.Init.NominalPrescaler = 16;
+  hfdcan1.Init.NominalPrescaler = 8;
   hfdcan1.Init.NominalSyncJumpWidth = 1;
-  hfdcan1.Init.NominalTimeSeg1 = 1;
-  hfdcan1.Init.NominalTimeSeg2 = 1;
+  hfdcan1.Init.NominalTimeSeg1 = 15;
+  hfdcan1.Init.NominalTimeSeg2 = 4;
   hfdcan1.Init.DataPrescaler = 1;
   hfdcan1.Init.DataSyncJumpWidth = 1;
   hfdcan1.Init.DataTimeSeg1 = 1;
@@ -438,6 +463,51 @@ static void MX_SPI1_Init(void)
 }
 
 /**
+  * @brief TIM2 Initialization Function
+  * @param None
+  * @retval None
+  */
+static void MX_TIM2_Init(void)
+{
+
+  /* USER CODE BEGIN TIM2_Init 0 */
+
+  /* USER CODE END TIM2_Init 0 */
+
+  TIM_ClockConfigTypeDef sClockSourceConfig = {0};
+  TIM_MasterConfigTypeDef sMasterConfig = {0};
+
+  /* USER CODE BEGIN TIM2_Init 1 */
+
+  /* USER CODE END TIM2_Init 1 */
+  htim2.Instance = TIM2;
+  htim2.Init.Prescaler = 159;
+  htim2.Init.CounterMode = TIM_COUNTERMODE_UP;
+  htim2.Init.Period = 999999;
+  htim2.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
+  htim2.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_ENABLE;
+  if (HAL_TIM_Base_Init(&htim2) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  sClockSourceConfig.ClockSource = TIM_CLOCKSOURCE_INTERNAL;
+  if (HAL_TIM_ConfigClockSource(&htim2, &sClockSourceConfig) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  sMasterConfig.MasterOutputTrigger = TIM_TRGO_RESET;
+  sMasterConfig.MasterSlaveMode = TIM_MASTERSLAVEMODE_DISABLE;
+  if (HAL_TIMEx_MasterConfigSynchronization(&htim2, &sMasterConfig) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  /* USER CODE BEGIN TIM2_Init 2 */
+
+  /* USER CODE END TIM2_Init 2 */
+
+}
+
+/**
   * @brief GPIO Initialization Function
   * @param None
   * @retval None
@@ -501,7 +571,63 @@ static void MX_GPIO_Init(void)
 }
 
 /* USER CODE BEGIN 4 */
+void HAL_FDCAN_RxFifo0Callback(FDCAN_HandleTypeDef *hfdcan, uint32_t RxFifo0ITs)
+{
+    FDCAN_RxHeaderTypeDef RxHeader;
+    uint8_t RxData[8];
 
+    if (HAL_FDCAN_GetRxMessage(hfdcan, FDCAN_RX_FIFO0, &RxHeader, RxData) == HAL_OK)
+    {
+        switch (RxHeader.Identifier)
+        {
+            case 0x010: 		//Fault/Err
+            {
+                uint8_t faultNum = RxData[0];
+                uint8_t faultCode = RxData[1];
+
+                if (faultNum < 100)
+                {
+                    Fault_Status[faultNum] = faultCode;
+                }
+                break;
+            }
+
+            case 0x100: 		//Driving/Power
+            {
+                DrivingData.Speed           = RxData[0];
+                DrivingData.Recommend_Speed = RxData[1];
+                DrivingData.MPPT_Power      = RxData[2];
+                DrivingData.Motor_Power     = RxData[3];
+                break;
+            }
+
+
+            case 0x200: 		//Status/Information1
+            {
+                DrivingData.Battery_SOC = RxData[0];
+
+                DrivingData.Signal_State  = (RxData[1] & 0x01) ? true : false; // Bit 0
+                DrivingData.Battery_State = (RxData[1] & 0x02) ? true : false; // Bit 1
+
+                InfoData.Time_Hour = RxData[2];
+                InfoData.Time_Min  = RxData[3];
+                break;
+            }
+
+
+            case 0x201: 		//Status/Information2
+            {
+                InfoData.Info_1 = RxData[0];
+                InfoData.Info_2 = RxData[1];
+
+                InfoData.Info_3 = (uint16_t)((RxData[3] << 8) | RxData[2]);
+
+                InfoData.Info_4 = RxData[4];
+                break;
+            }
+        }
+    }
+}
 /* USER CODE END 4 */
 
 /**

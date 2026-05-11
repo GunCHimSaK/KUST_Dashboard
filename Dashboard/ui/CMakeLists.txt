@@ -1,0 +1,24 @@
+SET(SOURCES screens/ui_Screen1.c
+    ui.c
+    components/ui_comp_hook.c
+    ui_helpers.c
+    images/ui_img_elec_warn_png.c
+    images/ui_img_hazzard_png.c
+    images/ui_img_left_0_png.c
+    images/ui_img_left_1_png.c
+    images/ui_img_right_0_png.c
+    images/ui_img_right_1_png.c
+    images/ui_img_acc_png.c
+    images/ui_img_mppt_png.c
+    images/ui_img_motor_png.c
+    images/ui_img_battary_png.c
+    images/ui_img_commu_png.c
+    images/ui_img_recommend_png.c
+    images/ui_img_logo_png.c
+    fonts/ui_font_acc.c
+    fonts/ui_font_accunit.c
+    fonts/ui_font_fontspeed.c
+    fonts/ui_font_fontspeedunit.c
+    fonts/ui_font_info.c)
+
+add_library(ui ${SOURCES})

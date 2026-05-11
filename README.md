@@ -13,7 +13,7 @@
 
 ### **Dashboard Screen**
 
-![](file://C:\Users\Han%20Gyujin\AppData\Roaming\marktext\images\2026-05-11-21-05-10-image.png?msec=1778501110466)
+<img width="1430" height="957" alt="image" src="https://github.com/user-attachments/assets/11a3cacf-faa4-46da-b3c9-4f16908411d9" />
 
 ### Hardware
 
@@ -70,8 +70,8 @@
 ###
 
 ### PCB Artwork (26.04.13. Update)
+<img width="1475" height="453" alt="image" src="https://github.com/user-attachments/assets/155e7eab-d738-47fb-8df5-6bfd7a26f31e" />
 
-![](file:///C:/Users/Han%20Gyujin/AppData/Roaming/marktext/images/2026-05-11-21-10-33-image.png?msec=1778501437729)![](file:///C:/Users/Han%20Gyujin/AppData/Roaming/marktext/images/2026-05-11-21-10-50-image.png?msec=1778501459337)
 
 ### LED
 

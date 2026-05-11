@@ -7,8 +7,8 @@
 차량 내 핵심 데이터(Driving/Power, Battery BMS)들을 CAN 통신을 통해 데이터를 주고받으며, 주행 정보 및 에러 상태를 실시간으로 계기판 LCD에 띄우고 핸들에서 입력되는 다양한 버튼 데이터들을 각 부분에 전송합니다.
 
 ### **System Block Diagram**
+<img width="922" height="293" alt="image" src="https://github.com/user-attachments/assets/05a70434-7c00-4ddf-8185-0e943a41ad37" />
 
-![](file://C:\Users\Han%20Gyujin\AppData\Roaming\marktext\images\2026-05-11-21-00-26-image.png?msec=1778500826777)
 
 ### **Dashboard Screen**
 

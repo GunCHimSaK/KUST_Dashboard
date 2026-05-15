@@ -67,8 +67,8 @@ void Error_Handler(void);
 #define STM_DIN3_GPIO_Port GPIOC
 #define STM_DIN0_Pin GPIO_PIN_0
 #define STM_DIN0_GPIO_Port GPIOA
-#define STM_DIN0A2_Pin GPIO_PIN_2
-#define STM_DIN0A2_GPIO_Port GPIOA
+#define STM_DIN1_Pin GPIO_PIN_2
+#define STM_DIN1_GPIO_Port GPIOA
 #define STM_AIN0_Pin GPIO_PIN_3
 #define STM_AIN0_GPIO_Port GPIOA
 #define EXTCOMIN_Pin GPIO_PIN_4
@@ -81,8 +81,10 @@ void Error_Handler(void);
 #define LED_ERR0_GPIO_Port GPIOB
 #define STM_Button_1_Pin GPIO_PIN_13
 #define STM_Button_1_GPIO_Port GPIOB
+#define STM_Button_1_EXTI_IRQn EXTI13_IRQn
 #define STM_Button_0_Pin GPIO_PIN_14
 #define STM_Button_0_GPIO_Port GPIOB
+#define STM_Button_0_EXTI_IRQn EXTI14_IRQn
 #define STM_Button_7_Pin GPIO_PIN_15
 #define STM_Button_7_GPIO_Port GPIOB
 #define STM_Button_6_Pin GPIO_PIN_8
@@ -93,6 +95,7 @@ void Error_Handler(void);
 #define STM_Button_4_GPIO_Port GPIOA
 #define STM_Button_2_Pin GPIO_PIN_15
 #define STM_Button_2_GPIO_Port GPIOA
+#define STM_Button_2_EXTI_IRQn EXTI15_IRQn
 #define STM_Button_3_Pin GPIO_PIN_4
 #define STM_Button_3_GPIO_Port GPIOB
 

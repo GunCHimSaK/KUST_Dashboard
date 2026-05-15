@@ -10,5 +10,8 @@
 
 VehicleState_t DrivingData = {0, };
 SystemInfo_t InfoData = {0, };
+LightState_t LightData = {false, false, false};
+AccState_t AccData = {false, 70};
 uint8_t Fault_Status[100] = {0, };
 bool    Fault_Data_Changed = false;
+

@@ -18,10 +18,13 @@
 /* USER CODE END Header */
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
-#include "vehicle_data.h"
+
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
-
+#include "lvgl.h"
+#include "SHARP_MIP.h"
+#include "ui.h"
+#include "vehicle_data.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -70,7 +73,104 @@ static void MX_TIM2_Init(void);
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
+void Dashboard_Update(void)
+{
+	static int totalErrorCount = 0;
+	    static int minFaultCode = -1;
 
+	    if (Fault_Data_Changed)
+	    {
+	        totalErrorCount = 0;
+	        minFaultCode = -1;
+
+	        for (int i = 0; i < 100; i++)
+	        {
+	            if (Fault_Status[i] != 0)
+	            {
+	                totalErrorCount++;
+
+	                if (minFaultCode == -1)
+	                {
+	                    minFaultCode = i;
+	                }
+	            }
+	        }
+
+	        Fault_Data_Changed = false;
+	    }
+
+	    /* 2. UI 업데이트 - 에러 레이블 */
+	    if (minFaultCode != -1)
+	    {
+	        // 00번 에러인 경우에도 숫자로 표시됩니다.
+	        lv_label_set_text_fmt(ui_FaultcodeLabel, "%02d", minFaultCode);
+	    }
+	    else
+	    {
+	        lv_label_set_text(ui_FaultcodeLabel, "-");
+	    }
+
+	    // 총 에러 개수 표시
+	    lv_label_set_text_fmt(ui_FaultcodecountLabel, "+%d", totalErrorCount);
+
+    /* 1. 속도 및 권장 속도 매핑 */
+    lv_label_set_text_fmt(ui_SpeedLabel, "%d", DrivingData.Speed);
+    lv_label_set_text_fmt(ui_RecommendLabel, "%d", DrivingData.Recommend_Speed);
+
+    /* 2. 전력 시스템 및 배터리 정보 */
+    lv_label_set_text_fmt(ui_MpptLabel, "%d W", DrivingData.MPPT_Power);
+    lv_label_set_text_fmt(ui_MotorLabel, "%d W", DrivingData.Motor_Power);
+    lv_label_set_text_fmt(ui_BattaryLabel, "%d%%", DrivingData.Battery_SOC);
+
+
+    lv_bar_set_value(ui_Bar1, InfoData.Info_4, LV_ANIM_OFF);
+
+    if (DrivingData.Signal_State == true)
+       {
+           lv_obj_clear_flag(ui_TeleImage, LV_OBJ_FLAG_HIDDEN); // 통신 연결 시 표시
+       }
+       else
+       {
+           lv_obj_add_flag(ui_TeleImage, LV_OBJ_FLAG_HIDDEN);   // 통신 끊김 시 숨김
+       }
+
+
+    // 배터리 상태 이상 시 경고 아이콘 노출 제어
+    if (DrivingData.Battery_State == false)
+    {
+        lv_obj_clear_flag(ui_BattarywarnImage, LV_OBJ_FLAG_HIDDEN);
+    }
+    else
+    {
+        lv_obj_add_flag(ui_BattarywarnImage, LV_OBJ_FLAG_HIDDEN);
+    }
+
+    /* 3. 시스템 상세 정보 (라벨 위젯 연동) */
+    lv_label_set_text_fmt(ui_info1unit, "%d %%", InfoData.Info_1);
+    lv_label_set_text_fmt(ui_info2unit, "%d W", InfoData.Info_2);
+    lv_label_set_text_fmt(ui_info3unit, "%d km", InfoData.Info_3);
+
+    /* 4. 시간 표시 (HH:MM 포맷) */
+    static char time_buf[16];
+    snprintf(time_buf, sizeof(time_buf), "%02d:%02d", InfoData.Time_Hour, InfoData.Time_Min);
+    lv_label_set_text(ui_TimeLabel, time_buf);
+    /*
+    /* 5. 방향 지시등 및 비상등 제어 */
+    /*
+    if (DrivingData.Signal_State)
+    {
+        lv_obj_clear_flag(ui_HazzardImage, LV_OBJ_FLAG_HIDDEN);
+        lv_obj_clear_flag(ui_Left1Image, LV_OBJ_FLAG_HIDDEN);
+        lv_obj_clear_flag(ui_Right1Image, LV_OBJ_FLAG_HIDDEN);
+    }
+    else
+    {
+        lv_obj_add_flag(ui_HazzardImage, LV_OBJ_FLAG_HIDDEN);
+        lv_obj_add_flag(ui_Left1Image, LV_OBJ_FLAG_HIDDEN);
+        lv_obj_add_flag(ui_Right1Image, LV_OBJ_FLAG_HIDDEN);
+    }
+    */
+}
 /* USER CODE END 0 */
 
 /**
@@ -134,6 +234,29 @@ int main(void)
   HAL_FDCAN_Start(&hfdcan1);
   HAL_FDCAN_ActivateNotification(&hfdcan1, FDCAN_IT_RX_FIFO0_NEW_MESSAGE, 0);
 
+
+  HAL_LPTIM_PWM_Start(&hlptim2, LPTIM_CHANNEL_1);		//EXTCOMIN Start
+
+    // 2. LVGL 핵심 초기화
+    lv_init();
+
+    // 3. 디스플레이 버퍼 및 드라이버 초기화 (SHARP MIP 설정)
+    static lv_disp_draw_buf_t draw_buf;
+    static uint8_t buf_1[240 * (2 + 320 / 8) + 2]; // Sharp MIP 전용 Oversized 버퍼
+    lv_disp_draw_buf_init(&draw_buf, buf_1, NULL, 320 * 240);
+
+    static lv_disp_drv_t disp_drv;
+    lv_disp_drv_init(&disp_drv);
+    disp_drv.hor_res = 320;
+    disp_drv.ver_res = 240;
+    disp_drv.flush_cb = sharp_mip_flush;
+    disp_drv.rounder_cb = sharp_mip_rounder;
+    disp_drv.set_px_cb = sharp_mip_set_px;
+    disp_drv.draw_buf = &draw_buf;
+    lv_disp_drv_register(&disp_drv);
+
+    // 4. SquareLine UI 초기화
+    ui_init();
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -143,7 +266,13 @@ int main(void)
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
-	  //adad
+	  Dashboard_Update();
+
+	      // 2. LVGL 그래픽 업데이트 처리 (엔진 구동)
+	  lv_timer_handler();
+
+	      // 3. 시스템 부하 분산을 위한 딜레이
+	  HAL_Delay(5);
   }
   /* USER CODE END 3 */
 }
@@ -586,10 +715,16 @@ void HAL_FDCAN_RxFifo0Callback(FDCAN_HandleTypeDef *hfdcan, uint32_t RxFifo0ITs)
                 uint8_t faultNum = RxData[0];
                 uint8_t faultCode = RxData[1];
 
-                if (faultNum < 100)
-                {
-                    Fault_Status[faultNum] = faultCode;
-                }
+                if (faultNum > 0 && faultNum < 100)
+                    {
+                        Fault_Status[faultNum] = faultCode;
+                        Fault_Data_Changed = true;
+                    }
+                    else if (faultNum == 0)
+                    {
+
+                        Fault_Status[0] = faultCode;
+                    }
                 break;
             }
 

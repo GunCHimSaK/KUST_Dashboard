@@ -11,3 +11,4 @@
 VehicleState_t DrivingData = {0, };
 SystemInfo_t InfoData = {0, };
 uint8_t Fault_Status[100] = {0, };
+bool    Fault_Data_Changed = false;

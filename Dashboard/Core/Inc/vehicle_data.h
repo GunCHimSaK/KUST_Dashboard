@@ -35,5 +35,6 @@ typedef struct
 extern VehicleState_t  DrivingData;
 extern SystemInfo_t    InfoData;
 extern uint8_t Fault_Status[100];
+extern bool    Fault_Data_Changed;
 
 #endif /* INC_VEHICLE_DATA_H_ */

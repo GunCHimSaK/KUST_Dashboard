@@ -3,43 +3,6 @@
  *
  */
 
-/*-------------------------------------------------------------------------------------------------
- *  SHARP memory in pixel monochrome display series
- *      LS012B7DD01 (184x38  pixels.)
- *      LS013B7DH03 (128x128 pixels.)
- *      LS013B7DH05 (144x168 pixels.)
- *      LS027B7DH01 (400x240 pixels.) (tested)
- *      LS032B7DD02 (336x536 pixels.)
- *      LS044Q7DH01 (320x240 pixels.)
- *
- *  These displays need periodic com inversion, there are two ways :
- *    - software com inversion :
- *      define SHARP_MIP_SOFT_COM_INVERSION 1 and set EXTMODE display pin LOW,
- *      call sharp_mip_com_inversion() periodically
- *    - hardware com inversion with EXTCOMIN display pin :
- *      define SHARP_MIP_SOFT_COM_INVERSION 0,
- *      set EXTMODE display pin HIGH and handle
- *      EXTCOMIN waveform (for example with mcu pwm output),
- *      see datasheet pages 8-12 for details
- *
- *  draw_buf size : (LV_VER_RES / X) * (2 + LV_HOR_RES / 8) + 2 bytes, structure :
- *      [FRAME_HEADER (1 byte)] [GATE_ADDR (1 byte )] [LINE_DATA (LV_HOR_RES / 8 bytes)]  1st  line
- *      [DUMMY        (1 byte)] [GATE_ADDR (1 byte )] [LINE_DATA (LV_HOR_RES / 8 bytes)]  2nd  line
- *      ...........................................................................................
- *      [DUMMY        (1 byte)] [GATE_ADDR (1 byte )] [LINE_DATA (LV_HOR_RES / 8 bytes)]  last line
- *      [DUMMY                             (2 bytes)]
- *
- *  Since extra bytes (dummy, addresses, header) are stored in draw_buf, we need to use
- *  an "oversized" draw_buf. Buffer declaration in "lv_port_disp.c" becomes for example :
- *      static lv_disp_buf_t disp_buf;
- *      static uint8_t buf[(LV_VER_RES_MAX / X) * (2 + (LV_HOR_RES_MAX / 8)) + 2];
- *      lv_disp_buf_init(&disp_buf, buf, NULL, LV_VER_RES_MAX * LV_HOR_RES_MAX / X);
- *-----------------------------------------------------------------------------------------------*/
-
-/*********************
- *      INCLUDES
- *********************/
-
 #include "SHARP_MIP.h"
 
 #if USE_SHARP_MIP
@@ -49,25 +12,16 @@
 #include LV_DRV_DELAY_INCLUDE
 
 /*********************
- *      DEFINES
+ * DEFINES
  *********************/
 
 #define SHARP_MIP_HEADER              0
-#define SHARP_MIP_UPDATE_RAM_FLAG     (1 << 7)  /* (M0) Mode flag : H -> update memory, L -> maintain memory */
-#define SHARP_MIP_COM_INVERSION_FLAG  (1 << 6)  /* (M1) Frame inversion flag : relevant when EXTMODE = L,    */
-                                                /*      H -> outputs VCOM = H, L -> outputs VCOM = L         */
-#define SHARP_MIP_CLEAR_SCREEN_FLAG   (1 << 5)  /* (M2) All clear flag : H -> clear all pixels               */
+#define SHARP_MIP_UPDATE_RAM_FLAG     (1 << 7)
+#define SHARP_MIP_COM_INVERSION_FLAG  (1 << 6)
+#define SHARP_MIP_CLEAR_SCREEN_FLAG   (1 << 5)
 
 /**********************
- *      TYPEDEFS
- **********************/
-
-/**********************
- *  STATIC PROTOTYPES
- **********************/
-
-/**********************
- *  STATIC VARIABLES
+ * STATIC VARIABLES
  **********************/
 
 #if SHARP_MIP_SOFT_COM_INVERSION
@@ -75,24 +29,24 @@ static bool com_output_state = false;
 #endif
 
 /**********************
- *      MACROS
+ * MACROS
  **********************/
 
-/*
- * Return the draw_buf byte index corresponding to the pixel
- * relatives coordinates (x, y) in the area.
- * The area is rounded to a whole screen line.
- */
 #define BUFIDX(x, y)  (((x) >> 3) + ((y) * (2 + (SHARP_MIP_HOR_RES >> 3))) + 2)
-
-/*
- * Return the byte bitmask of a pixel bit corresponding
- * to draw_buf arrangement (8 pixels per byte on lines).
- */
 #define PIXIDX(x)     SHARP_MIP_REV_BYTE(1 << ((x) & 7))
 
 /**********************
- *   GLOBAL FUNCTIONS
+ * GLOBAL VARIABLES (DMA용)
+ **********************/
+
+/* main.c에 선언된 SPI 핸들을 가져옵니다. */
+extern SPI_HandleTypeDef hspi1;
+
+/* DMA 인터럽트 발생 시 사용할 LVGL 디스플레이 드라이버 포인터 */
+lv_disp_drv_t * active_disp_drv = NULL;
+
+/**********************
+ * GLOBAL FUNCTIONS
  **********************/
 
 void sharp_mip_init(void) {
@@ -128,12 +82,16 @@ void sharp_mip_flush(lv_disp_drv_t * disp_drv, const lv_area_t * area, lv_color_
   buf[0] = SHARP_MIP_HEADER         |
            SHARP_MIP_UPDATE_RAM_FLAG;
 
-  /* Write the frame on display memory */
-  LV_DRV_DISP_SPI_CS(1);
-  LV_DRV_DISP_SPI_WR_ARRAY(buf, buf_size);
-  LV_DRV_DISP_SPI_CS(0);
+  /* --- GPDMA 전송 시작 --- */
 
-  lv_disp_flush_ready(disp_drv);
+  /* 전송 완료 콜백에서 사용할 수 있도록 드라이버 주소 백업 */
+  active_disp_drv = disp_drv;
+
+  /* CS 핀 활성화 (HIGH) */
+  HAL_GPIO_WritePin(SPI1_SCS_GPIO_Port, SPI1_SCS_Pin, GPIO_PIN_SET);
+
+  /* SPI DMA 전송 (이후 처리는 main.c의 HAL_SPI_TxCpltCallback에서 수행) */
+  HAL_SPI_Transmit_DMA(&hspi1, buf, buf_size);
 }
 
 void sharp_mip_set_px(lv_disp_drv_t * disp_drv, uint8_t * buf, lv_coord_t buf_w, lv_coord_t x, lv_coord_t y, lv_color_t color, lv_opa_t opa) {
@@ -174,9 +132,5 @@ void sharp_mip_com_inversion(void) {
   LV_DRV_DISP_SPI_CS(0);
 }
 #endif
-
-/**********************
- *   STATIC FUNCTIONS
- **********************/
 
 #endif

@@ -56,6 +56,8 @@
 
 /* External variables --------------------------------------------------------*/
 extern FDCAN_HandleTypeDef hfdcan1;
+extern DMA_HandleTypeDef handle_GPDMA1_Channel12;
+extern SPI_HandleTypeDef hspi1;
 extern TIM_HandleTypeDef htim2;
 /* USER CODE BEGIN EV */
 
@@ -267,6 +269,34 @@ void TIM2_IRQHandler(void)
   /* USER CODE BEGIN TIM2_IRQn 1 */
 
   /* USER CODE END TIM2_IRQn 1 */
+}
+
+/**
+  * @brief This function handles SPI1 global interrupt.
+  */
+void SPI1_IRQHandler(void)
+{
+  /* USER CODE BEGIN SPI1_IRQn 0 */
+
+  /* USER CODE END SPI1_IRQn 0 */
+  HAL_SPI_IRQHandler(&hspi1);
+  /* USER CODE BEGIN SPI1_IRQn 1 */
+
+  /* USER CODE END SPI1_IRQn 1 */
+}
+
+/**
+  * @brief This function handles GPDMA1 Channel 12 global interrupt.
+  */
+void GPDMA1_Channel12_IRQHandler(void)
+{
+  /* USER CODE BEGIN GPDMA1_Channel12_IRQn 0 */
+
+  /* USER CODE END GPDMA1_Channel12_IRQn 0 */
+  HAL_DMA_IRQHandler(&handle_GPDMA1_Channel12);
+  /* USER CODE BEGIN GPDMA1_Channel12_IRQn 1 */
+
+  /* USER CODE END GPDMA1_Channel12_IRQn 1 */
 }
 
 /* USER CODE BEGIN 1 */

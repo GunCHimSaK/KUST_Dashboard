@@ -60,6 +60,8 @@ void EXTI14_IRQHandler(void);
 void EXTI15_IRQHandler(void);
 void FDCAN1_IT0_IRQHandler(void);
 void TIM2_IRQHandler(void);
+void SPI1_IRQHandler(void);
+void GPDMA1_Channel12_IRQHandler(void);
 /* USER CODE BEGIN EFP */
 
 /* USER CODE END EFP */

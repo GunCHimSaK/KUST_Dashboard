@@ -37,6 +37,14 @@
  외부 디지털 입력 4ch ──▶ [TLP291-4 포토커플러] ─────────────▶ STM32U545
 ```
 
+### 펌웨어 데이터 흐름
+![Firmware Block Diagram](docs/images/firmware_block_diagram.png)
+
+### 계기판 화면 (SquareLine Studio)
+![Dashboard Screen](docs/images/dashboard_screen.png)
+
+방향지시등·비상등·경고, 속도, ACC 설정 속도, 권장 속도, 모터·MPPT 전력, 통신 상태, 시간, 배터리 잔량(SOC)을 표시합니다. 왼쪽은 모든 표시를 켠 상태, 오른쪽은 일반 주행 상태입니다.
+
 ## 하드웨어 설계
 
 ### 1. 전원 보호부 — LM76202-Q1

@@ -1,0 +1,128 @@
+(kicad_sch
+	(version 20250114)
+	(generator "eeschema")
+	(generator_version "9.0")
+	(uuid "ea401a4f-94af-438a-96ad-28f418f2e3d4")
+	(paper "A4")
+	(lib_symbols)
+	(wire
+		(pts
+			(xy 77.47 52.07) (xy 85.09 52.07)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "838809a0-6edb-44a4-99fd-28b5f6c6bccc")
+	)
+	(sheet
+		(at 55.88 45.72)
+		(size 21.59 22.86)
+		(exclude_from_sim no)
+		(in_bom yes)
+		(on_board yes)
+		(dnp no)
+		(fields_autoplaced yes)
+		(stroke
+			(width 0.1524)
+			(type solid)
+		)
+		(fill
+			(color 0 0 0 0.0000)
+		)
+		(uuid "9bc7f364-c87f-4b51-ad32-b8cf4eae8f17")
+		(property "Sheetname" "Converter"
+			(at 55.88 45.0084 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify left bottom)
+			)
+		)
+		(property "Sheetfile" "Converter.kicad_sch"
+			(at 55.88 69.1646 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify left top)
+			)
+		)
+		(pin "IMON_OUT" output
+			(at 77.47 52.07 0)
+			(uuid "07d7d623-5028-41ef-9690-8df3bddafb08")
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify right)
+			)
+		)
+		(instances
+			(project "displaycontrol_V3"
+				(path "/ea401a4f-94af-438a-96ad-28f418f2e3d4"
+					(page "2")
+				)
+			)
+		)
+	)
+	(sheet
+		(at 85.09 30.48)
+		(size 50.8 38.1)
+		(exclude_from_sim no)
+		(in_bom yes)
+		(on_board yes)
+		(dnp no)
+		(fields_autoplaced yes)
+		(stroke
+			(width 0.1524)
+			(type solid)
+		)
+		(fill
+			(color 0 0 0 0.0000)
+		)
+		(uuid "c05cd767-17ec-42e7-8715-a3bf0d7c6bab")
+		(property "Sheetname" "MCU"
+			(at 85.09 29.7684 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify left bottom)
+			)
+		)
+		(property "Sheetfile" "MCU.kicad_sch"
+			(at 85.09 69.1646 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify left top)
+			)
+		)
+		(pin "IMON_OUT" input
+			(at 85.09 52.07 180)
+			(uuid "2008effa-1829-470d-b145-92574f6ee67b")
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify left)
+			)
+		)
+		(instances
+			(project "displaycontrol_V3"
+				(path "/ea401a4f-94af-438a-96ad-28f418f2e3d4"
+					(page "4")
+				)
+			)
+		)
+	)
+	(sheet_instances
+		(path "/"
+			(page "1")
+		)
+	)
+	(embedded_fonts no)
+)
